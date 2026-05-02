@@ -1,0 +1,10 @@
+{
+  "name": "ShotGrade",
+  "short_name": "ShotGrade",
+  "description": "에스프레소 샷 사진 → AI 등급(A~F) + 조절 가이드",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#d4a574",
+  "lang": "ko"
+}
