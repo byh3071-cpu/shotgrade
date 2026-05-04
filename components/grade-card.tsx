@@ -15,6 +15,7 @@ import { FeedbackButtons } from "@/components/feedback-buttons"
 type Props = {
   analysis: AnalysisResult
   shotId?: string | null
+  initialFeedback?: "up" | "down" | null
   className?: string
 }
 
@@ -23,7 +24,7 @@ function extractionLabel(status: AnalysisResult["extraction"]["status"]): string
   return map[status]
 }
 
-export function GradeCard({ analysis, shotId, className }: Props) {
+export function GradeCard({ analysis, shotId, initialFeedback = null, className }: Props) {
   return (
     <Card className={cn("border-border/80 bg-card/80 ring-1 ring-border/60", className)}>
       <CardHeader className="border-b border-border/60 pb-4">
@@ -66,7 +67,7 @@ export function GradeCard({ analysis, shotId, className }: Props) {
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-3 border-t border-border/60 bg-muted/30 sm:flex-row sm:items-center sm:justify-between">
-        <FeedbackButtons shotId={shotId} />
+        <FeedbackButtons shotId={shotId} initialFeedback={initialFeedback} />
       </CardFooter>
     </Card>
   )

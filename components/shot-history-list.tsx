@@ -1,6 +1,7 @@
 import Link from "next/link"
 import type { AnalysisResult } from "@/lib/types"
 import { createClient } from "@/lib/supabase/server"
+import { shotImageDisplayUrl } from "@/lib/supabase/storage"
 
 export async function ShotHistoryList() {
   const supabase = await createClient()
@@ -37,17 +38,24 @@ export async function ShotHistoryList() {
     return <p className="text-muted-foreground text-sm">아직 저장된 샷이 없어요.</p>
   }
 
+  const items = await Promise.all(
+    shots.map(async (shot) => ({
+      ...shot,
+      displayUrl: await shotImageDisplayUrl(supabase, shot.image_url as string),
+    }))
+  )
+
   return (
     <ul className="flex flex-col gap-3">
-      {shots.map((shot) => (
+      {items.map((shot) => (
         <li key={shot.id}>
           <Link
-            href="/"
+            href={`/history/${shot.id}`}
             className="flex gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:bg-muted/40"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={shot.image_url}
+              src={shot.displayUrl}
               alt=""
               className="size-16 shrink-0 rounded-lg object-cover"
             />
