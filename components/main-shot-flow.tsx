@@ -7,7 +7,7 @@ import { AuthButton } from "@/components/auth-button"
 import { CameraCapture } from "@/components/camera-capture"
 import { GradeCard } from "@/components/grade-card"
 import { Button } from "@/components/ui/button"
-import type { AnalysisResult } from "@/lib/types"
+import type { AnalysisResult, AnalyzeResponseBody } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 function AnalyzingSkeleton() {
@@ -49,6 +49,7 @@ export function MainShotFlow() {
   const [rawBase64, setRawBase64] = useState<string | null>(null)
   const [mimeType, setMimeType] = useState<string>("image/jpeg")
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null)
+  const [promptVersion, setPromptVersion] = useState<string | null>(null)
   const [shotId, setShotId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -58,6 +59,7 @@ export function MainShotFlow() {
     setRawBase64(base64)
     setMimeType(mime)
     setAnalysis(null)
+    setPromptVersion(null)
     setShotId(null)
     setError(null)
   }, [])
@@ -70,6 +72,7 @@ export function MainShotFlow() {
     setLoading(true)
     setError(null)
     setAnalysis(null)
+    setPromptVersion(null)
     setShotId(null)
     try {
       const res = await fetch("/api/analyze", {
@@ -80,12 +83,14 @@ export function MainShotFlow() {
           mimeType: mimeType as "image/jpeg" | "image/png" | "image/webp",
         }),
       })
-      const data = (await res.json()) as AnalysisResult & { error?: string; code?: string }
+      const data = (await res.json()) as AnalyzeResponseBody & { error?: string; code?: string }
       if (!res.ok) {
         setError(data.error ?? "분석에 실패했습니다")
         return
       }
-      setAnalysis(data as AnalysisResult)
+      const { prompt_version, ...analysisOnly } = data
+      setAnalysis(analysisOnly as AnalysisResult)
+      setPromptVersion(prompt_version)
     } catch {
       setError("네트워크 오류가 발생했습니다")
     } finally {
@@ -98,10 +103,15 @@ export function MainShotFlow() {
     setSaving(true)
     setError(null)
     try {
+      if (!promptVersion) {
+        setError("prompt_version 누락 — 다시 분석해 주세요")
+        return
+      }
       const result = await saveShotToHistory({
         base64: rawBase64,
         mimeType,
         analysis,
+        promptVersion,
       })
       if (!result.ok) {
         setError(result.message)

@@ -7,6 +7,7 @@ export async function saveShotToHistory(payload: {
   base64: string
   mimeType: string
   analysis: AnalysisResult
+  promptVersion: string
 }) {
   const supabase = await createClient()
   if (!supabase) {
@@ -52,6 +53,7 @@ export async function saveShotToHistory(payload: {
       score: payload.analysis.score,
       analysis: payload.analysis,
       feedback: null,
+      prompt_version: payload.promptVersion,
     })
     .select("id")
     .single()
