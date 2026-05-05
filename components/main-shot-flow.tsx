@@ -10,6 +10,41 @@ import { Button } from "@/components/ui/button"
 import type { AnalysisResult } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
+function AnalyzingSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-xl border border-border/80 bg-card/80 ring-1 ring-border/60">
+      <div className="border-b border-border/60 px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="h-5 w-12 animate-pulse rounded bg-muted/60" />
+          <div className="h-7 w-7 animate-pulse rounded-full bg-muted/60" />
+          <div className="h-4 w-24 animate-pulse rounded bg-muted/40" />
+        </div>
+      </div>
+      <div className="space-y-3 p-6">
+        {[
+          ["w-20", "w-12"],
+          ["w-16", "w-32"],
+          ["w-20", "w-16"],
+          ["w-24", "w-20"],
+        ].map(([labelW, valueW], i) => (
+          <div key={i} className="flex items-center justify-between">
+            <div className={`h-4 ${labelW} animate-pulse rounded bg-muted/40`} />
+            <div className={`h-4 ${valueW} animate-pulse rounded bg-muted/40`} />
+          </div>
+        ))}
+        <div className="mt-4 space-y-2 rounded-lg bg-muted/40 p-3">
+          <div className="h-3 w-20 animate-pulse rounded bg-muted/50" />
+          <div className="h-4 w-full animate-pulse rounded bg-muted/50" />
+          <div className="h-4 w-5/6 animate-pulse rounded bg-muted/50" />
+        </div>
+      </div>
+      <div className="border-t border-border/60 px-6 py-3 text-center">
+        <span className="text-muted-foreground text-xs">AI가 샷을 분석하고 있어요…</span>
+      </div>
+    </div>
+  )
+}
+
 export function MainShotFlow() {
   const [rawBase64, setRawBase64] = useState<string | null>(null)
   const [mimeType, setMimeType] = useState<string>("image/jpeg")
@@ -104,9 +139,7 @@ export function MainShotFlow() {
           </p>
         ) : null}
 
-        {loading ? (
-          <p className="text-muted-foreground text-center text-sm">분석 중입니다…</p>
-        ) : null}
+        {loading ? <AnalyzingSkeleton /> : null}
 
         {analysis ? (
           <div className="flex flex-col gap-4">

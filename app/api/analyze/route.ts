@@ -50,6 +50,13 @@ export async function POST(request: Request) {
     const msg = await anthropic.messages.create({
       model: ANALYSIS_MODEL,
       max_tokens: MAX_TOKENS,
+      system: [
+        {
+          type: "text",
+          text: SHOT_ANALYSIS_PROMPT,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       messages: [
         {
           role: "user",
@@ -62,14 +69,14 @@ export async function POST(request: Request) {
                 data: payload.image,
               },
             },
-            {
-              type: "text",
-              text: SHOT_ANALYSIS_PROMPT,
-            },
           ],
         },
       ],
     })
+
+    console.log(
+      `[analyze] cache_create=${msg.usage.cache_creation_input_tokens ?? 0} cache_read=${msg.usage.cache_read_input_tokens ?? 0} input=${msg.usage.input_tokens} output=${msg.usage.output_tokens}`
+    )
 
     const textBlocks = msg.content.filter((b) => b.type === "text")
     const raw = textBlocks.map((b) => (b.type === "text" ? b.text : "")).join("\n")
