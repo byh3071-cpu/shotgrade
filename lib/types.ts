@@ -1,5 +1,10 @@
 export type Grade = "A" | "B" | "C" | "D" | "F"
 
+export type UserCorrection = {
+  expected_grade: Grade
+  note?: string
+}
+
 export type InputType = "espresso_in_cup" | "portafilter_only" | "not_espresso"
 
 export type SurfacePattern =
@@ -35,6 +40,10 @@ export type AnalysisResult = {
   overall_comment: string
 }
 
+export type AnalyzeResponseBody = AnalysisResult & {
+  prompt_version: string
+}
+
 export type AnalyzeRequestBody = {
   image: string
   mimeType: "image/jpeg" | "image/png" | "image/webp"
@@ -53,5 +62,7 @@ export type ShotRow = {
   score: number
   analysis: AnalysisResult
   feedback: "up" | "down" | null
+  user_correction: UserCorrection | null
+  prompt_version: string | null
   created_at: string
 }
