@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useState } from "react"
+import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -48,20 +48,23 @@ type Props = {
 }
 
 export function CorrectionDrawer({ open, onOpenChange, initialCorrection, onSubmit }: Props) {
-  const [grade, setGrade] = useState<Grade | null>(null)
-  const [note, setNote] = useState<string>("")
+  const [grade, setGrade] = useState<Grade | null>(initialCorrection?.expected_grade ?? null)
+  const [note, setNote] = useState<string>(initialCorrection?.note ?? "")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleOpenChange = useCallback((isOpen: boolean) => {
-    if (isOpen) {
-      // Reset form when opening
+  // Reset form state when drawer transitions from closed to open.
+  // Pattern: setState during render guarded by prevOpen tracking
+  // (React docs: "You Might Not Need an Effect" — adjust state in render, not Effect).
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (open !== prevOpen) {
+    setPrevOpen(open)
+    if (open) {
       setGrade(initialCorrection?.expected_grade ?? null)
       setNote(initialCorrection?.note ?? "")
       setError(null)
     }
-    onOpenChange(isOpen)
-  }, [initialCorrection, onOpenChange])
+  }
 
   const handleSubmit = async () => {
     if (!grade || submitting) return
@@ -80,7 +83,7 @@ export function CorrectionDrawer({ open, onOpenChange, initialCorrection, onSubm
   }
 
   return (
-    <Drawer open={open} onOpenChange={handleOpenChange}>
+    <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
         <DrawerHeader className="text-left">
           <DrawerTitle>실제 등급은?</DrawerTitle>
