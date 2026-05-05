@@ -4,6 +4,7 @@ import { parseAnalysisJson, UnsupportedInputError } from "@/lib/analyze"
 import {
   ANALYSIS_MODEL,
   MAX_TOKENS,
+  PROMPT_VERSION,
   SHOT_ANALYSIS_PROMPT,
 } from "@/lib/prompts"
 import type { AnalyzeErrorBody, AnalyzeRequestBody } from "@/lib/types"
@@ -91,7 +92,7 @@ export async function POST(request: Request) {
 
     try {
       const analysis = parseAnalysisJson(raw)
-      return NextResponse.json(analysis)
+      return NextResponse.json({ ...analysis, prompt_version: PROMPT_VERSION })
     } catch (parseErr) {
       if (parseErr instanceof UnsupportedInputError) {
         const body: AnalyzeErrorBody = {
