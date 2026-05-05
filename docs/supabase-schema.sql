@@ -43,6 +43,16 @@ grant all on table shotgrade.shots to service_role;
 
 alter default privileges in schema shotgrade grant select, insert, update, delete on tables to authenticated;
 
+-- Feedback correction (added 2026-05-05) ─ collect labeled training data
+alter table shotgrade.shots
+  add column if not exists user_correction jsonb default null;
+
+alter table shotgrade.shots
+  add column if not exists prompt_version text default 'v1';
+
+create index if not exists idx_shots_prompt_version
+  on shotgrade.shots (prompt_version);
+
 -- Storage: 프로젝트 전역 버킷 `shot-images` (스키마와 무관) — Dashboard 에서 생성·정책 설정
 
 -- 이전에 public.shots 을 썼다면 데이터 이관 후 (선택):
