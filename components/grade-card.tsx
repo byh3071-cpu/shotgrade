@@ -1,6 +1,6 @@
 "use client"
 
-import type { AnalysisResult } from "@/lib/types"
+import type { AnalysisResult, UserCorrection } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { gradeBadgeClass } from "@/lib/grade-colors"
 import {
@@ -16,6 +16,7 @@ type Props = {
   analysis: AnalysisResult
   shotId?: string | null
   initialFeedback?: "up" | "down" | null
+  initialCorrection?: UserCorrection | null
   className?: string
 }
 
@@ -33,7 +34,13 @@ function extractionLabel(status: "under" | "optimal" | "over"): string {
   return map[status]
 }
 
-export function GradeCard({ analysis, shotId, initialFeedback = null, className }: Props) {
+export function GradeCard({
+  analysis,
+  shotId,
+  initialFeedback = null,
+  initialCorrection = null,
+  className,
+}: Props) {
   return (
     <Card className={cn("border-border/80 bg-card/80 ring-1 ring-border/60", className)}>
       <CardHeader className="border-b border-border/60 pb-4">
@@ -93,7 +100,11 @@ export function GradeCard({ analysis, shotId, initialFeedback = null, className 
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-3 border-t border-border/60 bg-muted/30 sm:flex-row sm:items-center sm:justify-between">
-        <FeedbackButtons shotId={shotId} initialFeedback={initialFeedback} />
+        <FeedbackButtons
+          shotId={shotId}
+          initialFeedback={initialFeedback}
+          initialCorrection={initialCorrection}
+        />
       </CardFooter>
     </Card>
   )
