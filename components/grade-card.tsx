@@ -19,7 +19,16 @@ type Props = {
   className?: string
 }
 
-function extractionLabel(status: AnalysisResult["extraction"]["status"]): string {
+const SURFACE_LABEL: Record<string, string> = {
+  tiger_stripe: "타이거 스트라이프",
+  blonde: "blonde (옅음)",
+  channeling: "채널링 흔적",
+  uniform: "균일",
+  broken: "깨진 표면",
+  none: "특이사항 없음",
+}
+
+function extractionLabel(status: "under" | "optimal" | "over"): string {
   const map = { under: "부족", optimal: "적정", over: "과다" }
   return map[status]
 }
@@ -48,11 +57,28 @@ export function GradeCard({ analysis, shotId, initialFeedback = null, className 
           <Row label="크레마 두께" value={`${analysis.crema.thickness_mm} mm`} />
           <Row label="색상" value={analysis.crema.description} />
           <Row label="균일도" value={`${analysis.crema.uniformity}%`} />
-          <Row
-            label="추출 시간"
-            value={`약 ${analysis.extraction.estimated_time_sec}s · ${extractionLabel(analysis.extraction.status)}`}
-          />
-          <Row label="추출 코멘트" value={analysis.extraction.description} />
+          {analysis.visual ? (
+            <>
+              <Row
+                label="표면 패턴"
+                value={SURFACE_LABEL[analysis.visual.surface_pattern] ?? analysis.visual.surface_pattern}
+              />
+              {analysis.visual.observations.length > 0 ? (
+                <Row label="관찰" value={analysis.visual.observations.join(" · ")} />
+              ) : null}
+              {analysis.visual.defects.length > 0 ? (
+                <Row label="결함" value={analysis.visual.defects.join(" · ")} />
+              ) : null}
+            </>
+          ) : analysis.extraction ? (
+            <>
+              <Row
+                label="추출 시간 (구버전)"
+                value={`약 ${analysis.extraction.estimated_time_sec}s · ${extractionLabel(analysis.extraction.status)}`}
+              />
+              <Row label="추출 코멘트" value={analysis.extraction.description} />
+            </>
+          ) : null}
         </div>
         <div className="rounded-lg bg-muted/40 p-3">
           <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wide">

@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk"
 import { NextResponse } from "next/server"
-import { parseAnalysisJson } from "@/lib/analyze"
+import { parseAnalysisJson, UnsupportedInputError } from "@/lib/analyze"
 import {
   ANALYSIS_MODEL,
   MAX_TOKENS,
@@ -82,8 +82,19 @@ export async function POST(request: Request) {
       return NextResponse.json(body, { status: 502 })
     }
 
-    const analysis = parseAnalysisJson(raw)
-    return NextResponse.json(analysis)
+    try {
+      const analysis = parseAnalysisJson(raw)
+      return NextResponse.json(analysis)
+    } catch (parseErr) {
+      if (parseErr instanceof UnsupportedInputError) {
+        const body: AnalyzeErrorBody = {
+          error: parseErr.message,
+          code: "UNSUPPORTED_INPUT",
+        }
+        return NextResponse.json(body, { status: 422 })
+      }
+      throw parseErr
+    }
   } catch (e) {
     const message = e instanceof Error ? e.message : "분석에 실패했습니다"
     const body: AnalyzeErrorBody = {

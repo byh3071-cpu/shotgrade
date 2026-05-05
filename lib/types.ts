@@ -1,6 +1,17 @@
 export type Grade = "A" | "B" | "C" | "D" | "F"
 
+export type InputType = "espresso_in_cup" | "portafilter_only" | "not_espresso"
+
+export type SurfacePattern =
+  | "tiger_stripe"
+  | "blonde"
+  | "channeling"
+  | "uniform"
+  | "broken"
+  | "none"
+
 export type AnalysisResult = {
+  input_type?: InputType
   grade: Grade
   score: number
   crema: {
@@ -9,7 +20,13 @@ export type AnalysisResult = {
     uniformity: number
     description: string
   }
-  extraction: {
+  visual?: {
+    surface_pattern: SurfacePattern | string
+    observations: string[]
+    defects: string[]
+  }
+  /** Legacy field — old DB rows may still contain this. New analyses do not. */
+  extraction?: {
     estimated_time_sec: number
     status: "under" | "optimal" | "over"
     description: string
