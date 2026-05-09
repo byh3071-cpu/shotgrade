@@ -49,8 +49,8 @@ export function MainShotFlow() {
   const [rawBase64, setRawBase64] = useState<string | null>(null)
   const [mimeType, setMimeType] = useState<string>("image/jpeg")
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null)
-  const [promptVersion, setPromptVersion] = useState<string | null>(null)
   const [shotId, setShotId] = useState<string | null>(null)
+  const [imageSaved, setImageSaved] = useState(false)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -59,8 +59,8 @@ export function MainShotFlow() {
     setRawBase64(base64)
     setMimeType(mime)
     setAnalysis(null)
-    setPromptVersion(null)
     setShotId(null)
+    setImageSaved(false)
     setError(null)
   }, [])
 
@@ -72,8 +72,8 @@ export function MainShotFlow() {
     setLoading(true)
     setError(null)
     setAnalysis(null)
-    setPromptVersion(null)
     setShotId(null)
+    setImageSaved(false)
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -88,9 +88,9 @@ export function MainShotFlow() {
         setError(data.error ?? "분석에 실패했습니다")
         return
       }
-      const { prompt_version, ...analysisOnly } = data
-      setAnalysis(analysisOnly as AnalysisResult)
-      setPromptVersion(prompt_version)
+      const { shot_id, ...analysisRest } = data
+      setAnalysis(analysisRest as AnalysisResult)
+      setShotId(shot_id)
     } catch {
       setError("네트워크 오류가 발생했습니다")
     } finally {
@@ -99,25 +99,20 @@ export function MainShotFlow() {
   }
 
   const saveHistory = async () => {
-    if (!rawBase64 || !analysis) return
+    if (!rawBase64 || !analysis || !shotId) return
     setSaving(true)
     setError(null)
     try {
-      if (!promptVersion) {
-        setError("prompt_version 누락 — 다시 분석해 주세요")
-        return
-      }
       const result = await saveShotToHistory({
+        shotId,
         base64: rawBase64,
         mimeType,
-        analysis,
-        promptVersion,
       })
       if (!result.ok) {
         setError(result.message)
         return
       }
-      setShotId(result.shotId)
+      setImageSaved(true)
     } finally {
       setSaving(false)
     }
@@ -157,10 +152,10 @@ export function MainShotFlow() {
             <Button
               type="button"
               variant="secondary"
-              disabled={saving || !!shotId}
+              disabled={saving || imageSaved || !shotId}
               onClick={() => void saveHistory()}
             >
-              {shotId ? "히스토리에 저장됨" : saving ? "저장 중…" : "히스토리에 저장"}
+              {imageSaved ? "히스토리에 저장됨" : saving ? "저장 중…" : "히스토리에 저장"}
             </Button>
           </div>
         ) : null}

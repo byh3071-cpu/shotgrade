@@ -27,6 +27,7 @@ export async function ShotHistoryList() {
     .from("shots")
     .select("id, image_url, grade, analysis, created_at")
     .eq("user_id", user.id)
+    .neq("image_url", "")
     .order("created_at", { ascending: false })
     .limit(50)
 

@@ -20,9 +20,21 @@ function stripCodeFence(raw: string): string {
   return s.trim()
 }
 
+function extractJsonObject(text: string): string | null {
+  const m = text.match(/\{[\s\S]*\}/)
+  return m ? m[0] : null
+}
+
 export function parseAnalysisJson(text: string): AnalysisResult {
   const cleaned = stripCodeFence(text)
-  const parsed = JSON.parse(cleaned) as unknown
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(cleaned)
+  } catch {
+    const extracted = extractJsonObject(cleaned)
+    if (!extracted) throw new Error("INVALID_ANALYSIS_JSON")
+    parsed = JSON.parse(extracted)
+  }
   if (!parsed || typeof parsed !== "object") {
     throw new Error("INVALID_ANALYSIS_SHAPE")
   }

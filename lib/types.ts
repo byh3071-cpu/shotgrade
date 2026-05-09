@@ -42,6 +42,7 @@ export type AnalysisResult = {
 
 export type AnalyzeResponseBody = AnalysisResult & {
   prompt_version: string
+  shot_id: string
 }
 
 export type AnalyzeRequestBody = {

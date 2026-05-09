@@ -58,6 +58,7 @@ export default async function ShotDetailPage({
     .select("id, image_url, grade, score, analysis, feedback, user_correction, prompt_version, created_at")
     .eq("id", id)
     .eq("user_id", user.id)
+    .neq("image_url", "")
     .maybeSingle<ShotDetailRow>()
 
   if (error) {
