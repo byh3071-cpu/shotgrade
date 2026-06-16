@@ -1,0 +1,81 @@
+# ShotGrade — Cursor Rules
+
+## 프로젝트 정체성
+- 한 줄 설명: 에스프레소 샷 사진 → AI 등급(A~F) + 조절 가이드 PWA
+- 타겟 플랫폼: 모바일 PWA (iOS Safari, Android Chrome)
+
+## 필수 참조 문서
+- docs/PRD.md — 제품 범위, 유저 스토리, 제외 사항
+- docs/ARCHITECTURE.md — 데이터 흐름, API, 컴포넌트 구조
+- CLAUDE.md — 기록 규칙
+
+## 기술 스택 (변경 시 ADR 필수)
+- Next.js 16 (App Router, TypeScript)
+- Tailwind CSS 4 + shadcn/ui
+- Supabase Pro (Auth + PostgreSQL + Storage, schema: shotgrade)
+- Anthropic Claude Vision API (claude-sonnet-4-20250514)
+- Vercel (Hobby tier)
+
+## 아키텍처 규칙
+### 모듈 책임
+- `app/` — 라우팅 + 페이지 컴포넌트만
+- `components/` — UI 컴포넌트 (shadcn/ui 기반)
+- `lib/` — 비즈니스 로직, API 클라이언트, 유틸리티
+- `lib/supabase/` — Supabase 클라이언트 (client/server/db 분리)
+- `lib/prompts.ts` — Vision API 프롬프트 (핵심, 변경 시 ADR 작성)
+
+### 금지 사항
+- 모듈 간 순환 참조 금지
+- `ANTHROPIC_API_KEY`에 `NEXT_PUBLIC_` 접두사 절대 금지
+- `shotgrade.shots` 외 다른 스키마/테이블 직접 접근 금지
+- 클라이언트에서 Anthropic API 직접 호출 금지
+- `any` 타입 사용 금지
+
+## 코딩 규칙
+- TypeScript strict (any 금지)
+- 에러는 try-catch, 빈 catch 금지
+- console.log는 개발 중만, 프로덕션에서 제거
+- API 응답은 항상 `{ error: string; code: string }` 형태로 에러 반환
+- Vision API JSON 파싱 실패 시 정규식 추출 후 1회 재시도
+
+## 🎨 디자인 제약 조건
+### Colors
+- Background: #0a0a0a (다크)
+- Surface: #1a1a1a (카드/패널)
+- Accent: #d4a574 (커피 골드)
+- Text Primary: #ffffff
+- Text Secondary: #a0a0a0
+- Grade A: #22c55e / B: #84cc16 / C: #eab308 / D: #f97316 / F: #ef4444
+### Typography
+- Heading: Inter Bold 32/24/18px
+- Body: Inter Regular 15px, line-height 1.6
+- Korean fallback: Pretendard
+### Spacing
+- Section gap: 80px · Card padding: 24px · Element gap: 16px
+### Component Rules
+- Border radius: Card 12px, Button 8px, Input 6px
+- Shadow: 0 1px 3px rgba(0,0,0,0.1) max
+### Anti-patterns
+- ❌ 보라-파랑 기본 그라디언트
+- ❌ 과도한 둥근 모서리 (>16px)
+- ❌ 그림자 중첩 · 장식 SVG 남발
+- ❌ 저대비 회색 텍스트
+- ❌ 밝은 모드 디자인 (다크 모드 전용)
+
+## 기록 규칙 (CLAUDE.md 연동)
+- 기술 선택/변경 → docs/adr/
+- 기능 완성 → docs/log/
+- 에러 해결 → docs/troubleshooting/
+- 새로 배운 것 → docs/til.md
+- 스키마/API 변경 → docs/changelog.md
+
+## 커밋 컨벤션
+- feat: / fix: / refactor: / docs: / chore:
+
+## 구현 순서 (Day 4 기준)
+1. ALTER SQL: user_correction jsonb + prompt_version text
+2. History card 라우팅 버그 수정
+3. Security: API auth + rate limit + storage private + JSON parse guard
+4. PWA icons (192/512)
+5. E2E 수동 테스트 (8 시나리오)
+6. Feature → master merge + Vercel production deploy

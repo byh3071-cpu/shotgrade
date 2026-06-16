@@ -56,3 +56,4 @@ defects 가 없으면 [].
 
 export const ANALYSIS_MODEL = "claude-sonnet-4-20250514"
 export const MAX_TOKENS = 1024
+export const PROMPT_VERSION = "v1" as const

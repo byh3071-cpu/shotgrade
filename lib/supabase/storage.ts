@@ -11,12 +11,14 @@ export function storagePathFromUrl(url: string): string | null {
 
 export async function shotImageDisplayUrl(
   supabase: SupabaseClient,
-  imageUrl: string
+  imageUrlOrPath: string
 ): Promise<string> {
-  const path = storagePathFromUrl(imageUrl)
-  if (!path) return imageUrl
+  const path = imageUrlOrPath.startsWith("http")
+    ? storagePathFromUrl(imageUrlOrPath)
+    : imageUrlOrPath
+  if (!path) return imageUrlOrPath
   const { data } = await supabase.storage
     .from(BUCKET)
     .createSignedUrl(path, SIGN_TTL_SECONDS)
-  return data?.signedUrl ?? imageUrl
+  return data?.signedUrl ?? imageUrlOrPath
 }

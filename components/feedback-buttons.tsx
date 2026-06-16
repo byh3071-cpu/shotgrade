@@ -1,33 +1,97 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { toast } from "sonner"
+
 import { updateShotFeedback } from "@/app/actions/feedback"
+import { CorrectionDrawer } from "@/components/correction-drawer"
 import { Button } from "@/components/ui/button"
+import type { UserCorrection } from "@/lib/types"
 
 type Feedback = "up" | "down"
 
 type Props = {
   shotId: string | null | undefined
   initialFeedback?: Feedback | null
+  initialCorrection?: UserCorrection | null
 }
 
-export function FeedbackButtons({ shotId, initialFeedback = null }: Props) {
+export function FeedbackButtons({
+  shotId,
+  initialFeedback = null,
+  initialCorrection = null,
+}: Props) {
   const [pending, startTransition] = useTransition()
-  const [current, setCurrent] = useState<Feedback | null>(initialFeedback)
+  const [feedback, setFeedback] = useState<Feedback | null>(initialFeedback)
+  const [correction, setCorrection] = useState<UserCorrection | null>(initialCorrection)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const send = (type: Feedback) => {
+  const handleUp = () => {
     if (!shotId || pending) return
     setError(null)
-    const previous = current
-    setCurrent(type)
-    startTransition(async () => {
-      const result = await updateShotFeedback(shotId, type)
-      if (!result.ok) {
-        setCurrent(previous)
-        setError(result.message)
-      }
-    })
+    const prevFeedback = feedback
+    const prevCorrection = correction
+    if (feedback === "up") {
+      // toggle off
+      setFeedback(null)
+      setCorrection(null)
+      startTransition(async () => {
+        const result = await updateShotFeedback(shotId, null, null)
+        if (!result.ok) {
+          setFeedback(prevFeedback)
+          setCorrection(prevCorrection)
+          setError(result.message)
+        }
+      })
+    } else {
+      // set to up, clear any prior correction
+      setFeedback("up")
+      setCorrection(null)
+      startTransition(async () => {
+        const result = await updateShotFeedback(shotId, "up", null)
+        if (!result.ok) {
+          setFeedback(prevFeedback)
+          setCorrection(prevCorrection)
+          setError(result.message)
+        }
+      })
+    }
+  }
+
+  const handleDown = () => {
+    if (!shotId || pending) return
+    setError(null)
+    if (feedback !== "down") {
+      // first down click — save immediately, leave correction column untouched
+      const prevFeedback = feedback
+      setFeedback("down")
+      startTransition(async () => {
+        const result = await updateShotFeedback(shotId, "down")
+        if (!result.ok) {
+          setFeedback(prevFeedback)
+          setError(result.message)
+          return
+        }
+      })
+    }
+    // Always open drawer (whether first time or re-edit)
+    setDrawerOpen(true)
+  }
+
+  const handleSubmitCorrection = async (
+    next: UserCorrection
+  ): Promise<{ ok: boolean; message?: string }> => {
+    if (!shotId) return { ok: false, message: "shotId 없음" }
+    const prev = correction
+    setCorrection(next)
+    const result = await updateShotFeedback(shotId, "down", next)
+    if (!result.ok) {
+      setCorrection(prev)
+      return { ok: false, message: result.message }
+    }
+    toast.success("피드백 감사합니다 🙏")
+    return { ok: true }
   }
 
   const disabled = !shotId || pending
@@ -37,21 +101,21 @@ export function FeedbackButtons({ shotId, initialFeedback = null }: Props) {
       <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
-          variant={current === "up" ? "default" : "secondary"}
+          variant={feedback === "up" ? "default" : "secondary"}
           size="sm"
           disabled={disabled}
-          onClick={() => send("up")}
-          aria-pressed={current === "up"}
+          onClick={handleUp}
+          aria-pressed={feedback === "up"}
         >
           👍 정확해요
         </Button>
         <Button
           type="button"
-          variant={current === "down" ? "default" : "outline"}
+          variant={feedback === "down" ? "default" : "outline"}
           size="sm"
           disabled={disabled}
-          onClick={() => send("down")}
-          aria-pressed={current === "down"}
+          onClick={handleDown}
+          aria-pressed={feedback === "down"}
         >
           👎 아닌데
         </Button>
@@ -59,9 +123,12 @@ export function FeedbackButtons({ shotId, initialFeedback = null }: Props) {
           <span className="text-muted-foreground text-xs">
             히스토리에 저장하면 피드백을 남길 수 있어요.
           </span>
-        ) : current ? (
+        ) : feedback ? (
           <span className="text-muted-foreground text-xs">
             저장됨{pending ? " · 업데이트 중…" : ""}
+            {feedback === "down" && correction
+              ? ` · 보정 ${correction.expected_grade}`
+              : ""}
           </span>
         ) : null}
       </div>
@@ -70,6 +137,12 @@ export function FeedbackButtons({ shotId, initialFeedback = null }: Props) {
           {error}
         </p>
       ) : null}
+      <CorrectionDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        initialCorrection={correction}
+        onSubmit={handleSubmitCorrection}
+      />
     </div>
   )
 }

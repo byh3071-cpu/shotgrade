@@ -7,7 +7,7 @@ import { AuthButton } from "@/components/auth-button"
 import { CameraCapture } from "@/components/camera-capture"
 import { GradeCard } from "@/components/grade-card"
 import { Button } from "@/components/ui/button"
-import type { AnalysisResult } from "@/lib/types"
+import type { AnalysisResult, AnalyzeResponseBody } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 function AnalyzingSkeleton() {
@@ -50,6 +50,7 @@ export function MainShotFlow() {
   const [mimeType, setMimeType] = useState<string>("image/jpeg")
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null)
   const [shotId, setShotId] = useState<string | null>(null)
+  const [imageSaved, setImageSaved] = useState(false)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -59,6 +60,7 @@ export function MainShotFlow() {
     setMimeType(mime)
     setAnalysis(null)
     setShotId(null)
+    setImageSaved(false)
     setError(null)
   }, [])
 
@@ -71,6 +73,7 @@ export function MainShotFlow() {
     setError(null)
     setAnalysis(null)
     setShotId(null)
+    setImageSaved(false)
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -80,12 +83,14 @@ export function MainShotFlow() {
           mimeType: mimeType as "image/jpeg" | "image/png" | "image/webp",
         }),
       })
-      const data = (await res.json()) as AnalysisResult & { error?: string; code?: string }
+      const data = (await res.json()) as AnalyzeResponseBody & { error?: string; code?: string }
       if (!res.ok) {
         setError(data.error ?? "분석에 실패했습니다")
         return
       }
-      setAnalysis(data as AnalysisResult)
+      const { shot_id, ...analysisRest } = data
+      setAnalysis(analysisRest as AnalysisResult)
+      setShotId(shot_id)
     } catch {
       setError("네트워크 오류가 발생했습니다")
     } finally {
@@ -94,20 +99,20 @@ export function MainShotFlow() {
   }
 
   const saveHistory = async () => {
-    if (!rawBase64 || !analysis) return
+    if (!rawBase64 || !analysis || !shotId) return
     setSaving(true)
     setError(null)
     try {
       const result = await saveShotToHistory({
+        shotId,
         base64: rawBase64,
         mimeType,
-        analysis,
       })
       if (!result.ok) {
         setError(result.message)
         return
       }
-      setShotId(result.shotId)
+      setImageSaved(true)
     } finally {
       setSaving(false)
     }
@@ -147,10 +152,10 @@ export function MainShotFlow() {
             <Button
               type="button"
               variant="secondary"
-              disabled={saving || !!shotId}
+              disabled={saving || imageSaved || !shotId}
               onClick={() => void saveHistory()}
             >
-              {shotId ? "히스토리에 저장됨" : saving ? "저장 중…" : "히스토리에 저장"}
+              {imageSaved ? "히스토리에 저장됨" : saving ? "저장 중…" : "히스토리에 저장"}
             </Button>
           </div>
         ) : null}

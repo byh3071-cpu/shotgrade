@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import { GradeCard } from "@/components/grade-card"
 import { createClient } from "@/lib/supabase/server"
 import { shotImageDisplayUrl } from "@/lib/supabase/storage"
-import type { AnalysisResult, Grade } from "@/lib/types"
+import type { AnalysisResult, Grade, UserCorrection } from "@/lib/types"
 
 type ShotDetailRow = {
   id: string
@@ -12,6 +12,8 @@ type ShotDetailRow = {
   score: number
   analysis: AnalysisResult
   feedback: "up" | "down" | null
+  user_correction: UserCorrection | null
+  prompt_version: string | null
   created_at: string
 }
 
@@ -53,9 +55,10 @@ export default async function ShotDetailPage({
 
   const { data: shot, error } = await supabase
     .from("shots")
-    .select("id, image_url, grade, score, analysis, feedback, created_at")
+    .select("id, image_url, grade, score, analysis, feedback, user_correction, prompt_version, created_at")
     .eq("id", id)
     .eq("user_id", user.id)
+    .neq("image_url", "")
     .maybeSingle<ShotDetailRow>()
 
   if (error) {
@@ -91,6 +94,7 @@ export default async function ShotDetailPage({
           analysis={shot.analysis}
           shotId={shot.id}
           initialFeedback={shot.feedback}
+          initialCorrection={shot.user_correction}
         />
       </div>
     </div>

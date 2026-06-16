@@ -1,12 +1,11 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
-import type { AnalysisResult } from "@/lib/types"
 
 export async function saveShotToHistory(payload: {
+  shotId: string
   base64: string
   mimeType: string
-  analysis: AnalysisResult
 }) {
   const supabase = await createClient()
   if (!supabase) {
@@ -39,25 +38,19 @@ export async function saveShotToHistory(payload: {
     return { ok: false as const, message: uploadError.message }
   }
 
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("shot-images").getPublicUrl(path)
-
-  const { data: row, error: insertError } = await supabase
+  const { data: row, error: updateError } = await supabase
     .from("shots")
-    .insert({
-      user_id: user.id,
-      image_url: publicUrl,
-      grade: payload.analysis.grade,
-      score: payload.analysis.score,
-      analysis: payload.analysis,
-      feedback: null,
-    })
+    .update({ image_url: path })
+    .eq("id", payload.shotId)
+    .eq("user_id", user.id)
     .select("id")
     .single()
 
-  if (insertError) {
-    return { ok: false as const, message: insertError.message }
+  if (updateError || !row) {
+    return {
+      ok: false as const,
+      message: updateError?.message ?? "히스토리 row를 찾지 못했습니다",
+    }
   }
 
   return { ok: true as const, shotId: row.id }
