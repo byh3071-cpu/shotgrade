@@ -4,6 +4,8 @@ date: 2026-05-02
 tags: [process, documentation]
 ---
 
+@AGENTS.md
+
 # 기록 규칙 (ShotGrade)
 
 ## ADR (Architecture Decision Record)
